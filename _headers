@@ -1,0 +1,19 @@
+# Security and caching headers for Netlify and Cloudflare Pages
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https://*.googleusercontent.com https://places.googleapis.com; connect-src 'self' https://places.googleapis.com; script-src 'self'; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+
+/*.css
+  Cache-Control: public, max-age=86400
+/*.js
+  Cache-Control: public, max-age=86400
+/images/*
+  Cache-Control: public, max-age=2592000
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/site.webmanifest
+  Content-Type: application/manifest+json

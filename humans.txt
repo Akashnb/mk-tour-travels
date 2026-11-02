@@ -1,0 +1,9 @@
+/* TEAM */
+Business: M.K. Tour & Travels
+Location: Hapa Industrial Area, Jamnagar, Gujarat, India
+Phone: +91 91577 45453
+
+/* SITE */
+Last update: 2026/11/02
+Standards: HTML5, CSS3, vanilla JavaScript
+Notes: Static website, no frameworks, no external libraries.

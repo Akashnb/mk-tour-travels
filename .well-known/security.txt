@@ -1,0 +1,5 @@
+# Security contact for M.K. Tour & Travels
+Contact: tel:+919157745453
+Expires: 2027-10-31T23:59:59.000Z
+Preferred-Languages: en, hi, gu
+Canonical: https://YOUR-DOMAIN.com/.well-known/security.txt

@@ -1,0 +1,38 @@
+{
+  "name": "M.K. Tour & Travels",
+  "short_name": "MK Travels",
+  "description": "Taxi and cab service in Jamnagar: airport transfers, outstation trips and group travel across India. Open 24/7.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "background_color": "#ffffff",
+  "theme_color": "#0284c7",
+  "categories": [
+    "travel",
+    "business"
+  ],
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
