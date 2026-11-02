@@ -74,10 +74,65 @@
     });
   }
 
-  /* Reviews carousel (buttons, keyboard, autoplay that pauses on hover/touch/focus) */
+  /* ---------- Reviews: ALL Google reviews (from /api/reviews) in a carousel ---------- */
   const viewport = $('#reviewViewport');
+  const track = $('#reviewTrack');
   const behavior = reduceMotion ? 'auto' : 'smooth';
-  const step = () => { const c = viewport.querySelector('.review-card'); return c ? c.offsetWidth + 20 : viewport.clientWidth; };
+  const AVATAR_COLORS = ['#0284c7', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#0891b2', '#4f46e5', '#b45309'];
+  const colorFor = (name) => AVATAR_COLORS[[...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % AVATAR_COLORS.length];
+  const fmtDate = (d) => {
+    const t = Date.parse(d);
+    return Number.isNaN(t) ? '' : new Date(t).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  function reviewCard(r) {
+    const name = r.name || 'Google user';
+    const rating = Math.max(1, Math.min(5, Math.round(r.rating || 5)));
+    const fig = document.createElement('figure');
+    fig.className = 'card review-card';
+    fig.innerHTML = `
+      <div class="review-card__head">
+        <span class="avatar" aria-hidden="true">${esc(name.trim()[0] || 'G').toUpperCase()}</span>
+        <span class="review-card__who"><span class="review-card__name">${esc(name)}</span><span class="review-card__date">${esc(fmtDate(r.date))}</span></span>
+        <svg class="icon icon--google" role="img" aria-label="Google review"><use href="#i-google"/></svg>
+      </div>
+      <div class="review-card__stars" role="img" aria-label="${rating} out of 5 stars">${icon('star', 'icon--star').repeat(rating)}</div>
+      <blockquote class="review-card__text">${esc(r.text)}</blockquote>
+      <button class="review-card__toggle" type="button" hidden>Read more</button>`;
+    const avatar = fig.querySelector('.avatar');
+    avatar.style.background = colorFor(name); // CSSOM, allowed by the CSP
+    if (r.photo) { // Google profile photo; the coloured initial stays if it fails to load
+      const img = new Image();
+      img.alt = '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.referrerPolicy = 'no-referrer'; // Google blocks profile photos when a referrer is sent
+      img.addEventListener('load', () => { avatar.textContent = ''; avatar.append(img); avatar.classList.add('avatar--photo'); });
+      img.src = r.photo;
+    }
+    return fig;
+  }
+
+  function addReadMore(cards) { // "Read more" only on reviews that are cut off
+    cards.forEach((c) => {
+      const text = c.querySelector('.review-card__text');
+      let btn = c.querySelector('.review-card__toggle');
+      if (!btn) { // the built-in cards in index.html don't have one
+        btn = document.createElement('button');
+        btn.className = 'review-card__toggle';
+        btn.type = 'button';
+        btn.textContent = 'Read more';
+        c.append(btn);
+      }
+      btn.hidden = text.scrollHeight <= text.clientHeight + 2;
+      btn.addEventListener('click', () => {
+        const open = c.classList.toggle('is-expanded');
+        btn.textContent = open ? 'Show less' : 'Read more';
+      });
+    });
+  }
+
+  const step = () => { const c = track.firstElementChild; return c ? c.offsetWidth + 20 : viewport.clientWidth; };
   const atEnd = () => viewport.scrollLeft + viewport.clientWidth >= viewport.scrollWidth - 4;
   const next = () => viewport.scrollTo({ left: atEnd() ? 0 : viewport.scrollLeft + step(), behavior });
   const prev = () => viewport.scrollTo({ left: viewport.scrollLeft <= 4 ? viewport.scrollWidth : viewport.scrollLeft - step(), behavior });
@@ -91,6 +146,26 @@
     ['mouseenter', 'focusin', 'touchstart'].forEach((ev) => viewport.addEventListener(ev, stop, { passive: true }));
     ['mouseleave', 'focusout', 'touchend'].forEach((ev) => viewport.addEventListener(ev, start, { passive: true }));
   }
+  addReadMore(Array.from(track.children));
+
+  async function loadReviews() {
+    try {
+      const res = await fetch('/api/reviews');
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      if (data.rating) $$('[data-rating]').forEach((el) => { el.textContent = Number(data.rating).toFixed(1); });
+      if (data.total) $$('[data-count]').forEach((el) => { el.textContent = data.total; });
+      const list = (data.reviews || []).filter((r) => r.text); // every review that has written text
+      if (!list.length) return;
+      const cards = list.map(reviewCard);
+      track.replaceChildren(...cards);
+      viewport.scrollLeft = 0;
+      addReadMore(cards);
+    } catch (e) {
+      console.warn('Google reviews not loaded, showing built-in reviews.', e); // the reviews in index.html stay
+    }
+  }
+  loadReviews();
 
   /* ---------- Scroll animations ---------- */
   const REVEALS = [
@@ -101,6 +176,7 @@
     ['.route-card:nth-child(even)', 'right'],
     ['.gallery__item', 'zoom'],
     ['.feature-card', 'zoom'],
+    ['.review-summary', 'up'],
     ['.carousel', 'up'],
     ['.faq__item', 'up'],
     ['.cta__box', 'zoom'],
@@ -148,7 +224,7 @@
   /* Footer year */
   $('#year').textContent = new Date().getFullYear();
 
-  /* ===== Optional: live Google Business data (needs GOOGLE.API_KEY) ===== */
+  /* ===== Optional: live Google photos (needs GOOGLE.API_KEY). Reviews come from /api/reviews. ===== */
   function renderGallery(photos) {
     $('#galleryGrid').innerHTML = photos.map((p, i) => `
       <a class="gallery__item" href="${esc(p.full)}" target="_blank" rel="noopener">
@@ -156,40 +232,11 @@
       </a>`).join('');
   }
 
-  function renderReviews(list) {
-    $('#reviewTrack').innerHTML = list.map((r) => {
-      const letter = esc((r.name[0] || 'G').toUpperCase());
-      const avatar = r.photo ? `<img src="${esc(r.photo)}" alt="" referrerpolicy="no-referrer">` : letter; // photo if Google gives one, else the letter
-      return `
-        <figure class="card review-card">
-          <div class="review-card__head">
-            <span class="avatar" aria-hidden="true">${avatar}</span>
-            <span class="review-card__who"><span class="review-card__name">${esc(r.name)}</span><span class="review-card__date">${esc(r.when)}</span></span>
-            <svg class="icon icon--google" role="img" aria-label="Google review"><use href="#i-google"/></svg>
-          </div>
-          <div class="review-card__stars" role="img" aria-label="${r.rating} out of 5 stars">${icon('star', 'icon--star').repeat(r.rating)}</div>
-          <blockquote class="review-card__text">${esc(r.text)}</blockquote>
-        </figure>`;
-    }).join('');
-    viewport.scrollLeft = 0;
-  }
-
   function applyGoogle(data) {
-    if (data.rating) $$('[data-rating]').forEach((el) => { el.textContent = Number(data.rating).toFixed(1); });
-    if (data.userRatingCount) $$('[data-count]').forEach((el) => { el.textContent = data.userRatingCount; });
     const media = (name, w) => `https://places.googleapis.com/v1/${name}/media?maxWidthPx=${w}&key=${GOOGLE.API_KEY}`;
     if (data.photos && data.photos.length) {
       renderGallery(data.photos.slice(0, 6).map((p) => ({ thumb: media(p.name, 800), full: media(p.name, 1600) })));
       $('#heroImage').src = media(data.photos[0].name, 900);
-    }
-    if (data.reviews && data.reviews.length) {
-      renderReviews(data.reviews.filter((r) => r.rating >= 4).map((r) => ({
-        name: (r.authorAttribution && r.authorAttribution.displayName) || 'Google user',
-        photo: r.authorAttribution && r.authorAttribution.photoUri,
-        rating: r.rating,
-        text: (r.originalText && r.originalText.text) || (r.text && r.text.text) || '',
-        when: r.relativePublishTimeDescription || ''
-      })));
     }
   }
 
@@ -202,7 +249,7 @@
     } catch (e) { /* ignore */ }
     try {
       const res = await fetch('https://places.googleapis.com/v1/places/' + GOOGLE.PLACE_ID, {
-        headers: { 'X-Goog-Api-Key': GOOGLE.API_KEY, 'X-Goog-FieldMask': 'rating,userRatingCount,reviews,photos' }
+        headers: { 'X-Goog-Api-Key': GOOGLE.API_KEY, 'X-Goog-FieldMask': 'photos' }
       });
       if (!res.ok) throw new Error(res.status);
       const data = await res.json();
