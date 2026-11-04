@@ -172,6 +172,7 @@
     ['.section__intro:not(.section__head .section__intro), .section__head', 'up'],
     ['.areas', 'up'],
     ['.service-card', 'up'],
+    ['.fleet-card', 'up'],
     ['.route-card:nth-child(odd)', 'left'],
     ['.route-card:nth-child(even)', 'right'],
     ['.gallery__item', 'zoom'],
