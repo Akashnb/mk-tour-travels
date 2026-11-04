@@ -5,7 +5,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy: default-src 'self'; img-src 'self' data: https://*.googleusercontent.com https://places.googleapis.com; connect-src 'self' https://places.googleapis.com; script-src 'self'; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https://*.googleusercontent.com https://places.googleapis.com https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://places.googleapis.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; script-src 'self' https://*.googletagmanager.com; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
 
 /*.css
   Cache-Control: public, max-age=86400
